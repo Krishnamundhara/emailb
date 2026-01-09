@@ -24,10 +24,15 @@ router.get('/check-services', async (req: Request, res: Response) => {
 
   // Check Supabase connection
   try {
-    const { data, error } = await supabaseAdmin.from('campaigns').select('id').limit(1);
-    services.database = !error;
-    if (error) {
-      console.log('Database check error:', error.message);
+    if (supabaseAdmin) {
+      const { data, error } = await supabaseAdmin.from('campaigns').select('id').limit(1);
+      services.database = !error;
+      if (error) {
+        console.log('Database check error:', error.message);
+      }
+    } else {
+      console.log('Database check skipped: Supabase not configured');
+      services.database = false;
     }
   } catch (e) {
     console.log('Database check exception:', (e as Error).message);
@@ -41,10 +46,9 @@ router.get('/check-services', async (req: Request, res: Response) => {
     services.smtp = false;
   }
 
-  const allHealthy = Object.values(services).every(s => s);
-
-  res.status(allHealthy ? 200 : 503).json({
-    status: allHealthy ? 'healthy' : 'degraded',
+  // Return 200 even if some services are degraded (so Render doesn't restart the service)
+  res.status(200).json({
+    status: services.database && services.smtp ? 'healthy' : 'degraded',
     services,
     timestamp: new Date().toISOString(),
   });

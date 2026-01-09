@@ -84,11 +84,13 @@ class EmailService {
             success = true;
 
             // Update recipient status
-            await supabaseAdmin
-              .from('campaign_recipients')
-              .update({ status: 'sent', sent_at: new Date().toISOString() })
-              .eq('campaign_id', campaignId)
-              .eq('email', email);
+            if (supabaseAdmin) {
+              await supabaseAdmin
+                .from('campaign_recipients')
+                .update({ status: 'sent', sent_at: new Date().toISOString() })
+                .eq('campaign_id', campaignId)
+                .eq('email', email);
+            }
           } catch (error) {
             attempts++;
             lastError = error instanceof Error ? error.message : 'Unknown error';
@@ -99,7 +101,7 @@ class EmailService {
           }
         }
 
-        if (!success) {
+        if (!success && supabaseAdmin) {
           await supabaseAdmin
             .from('campaign_recipients')
             .update({ status: 'failed', error: lastError })

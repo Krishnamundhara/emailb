@@ -12,11 +12,39 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Allowed origins for CORS
+const allowedOrigins = [
+  'https://email-jpgg.onrender.com',
+  'https://emailb.onrender.com',
+  'http://localhost:3000',
+  'http://localhost:5000',
+];
+
+// Add FRONTEND_URL from env if provided
+if (process.env.FRONTEND_URL) {
+  // Clean up the URL in case it has issues
+  const cleanUrl = process.env.FRONTEND_URL.replace(/^http:\/\/https:\/\//, 'https://');
+  allowedOrigins.push(cleanUrl);
+}
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      // Allow all origins in production for now to debug
+      callback(null, true);
+    }
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // Rate limiting

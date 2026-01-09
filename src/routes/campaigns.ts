@@ -77,30 +77,32 @@ router.post('/', async (req: Request, res: Response) => {
     console.log(`Campaign ${campaignId} created with ${emails.length} emails`);
 
     // Also save to Supabase database (fire and forget)
-    (async () => {
-      try {
-        await supabaseAdmin
-          .from('campaigns')
-          .insert({
-            id: campaignId,
-            name,
-            subject,
-            body,
-            from_email: 'krishnamundhara183@gmail.com',
-            from_name: 'Email Verification',
-            total_emails: emails.length,
-            verified_emails: validEmailsList.length,
-            sent_emails: 0,
-            failed_emails: 0,
-            status: 'draft',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          });
-        console.log('Campaign saved to Supabase');
-      } catch (err) {
-        console.log('Supabase save error:', (err as Error).message);
-      }
-    })();
+    if (supabaseAdmin) {
+      (async () => {
+        try {
+          await supabaseAdmin
+            .from('campaigns')
+            .insert({
+              id: campaignId,
+              name,
+              subject,
+              body,
+              from_email: 'krishnamundhara183@gmail.com',
+              from_name: 'Email Verification',
+              total_emails: emails.length,
+              verified_emails: validEmailsList.length,
+              sent_emails: 0,
+              failed_emails: 0,
+              status: 'draft',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+          console.log('Campaign saved to Supabase');
+        } catch (err) {
+          console.log('Supabase save error:', (err as Error).message);
+        }
+      })();
+    }
 
     res.status(201).json({
       campaignId,
